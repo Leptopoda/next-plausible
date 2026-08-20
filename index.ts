@@ -1,6 +1,5 @@
 import usePlausible from './lib/usePlausible'
 import withPlausibleProxy from './lib/withPlausibleProxy'
-import PlausibleProvider from './lib/PlausibleProvider'
+import { initPlausible } from './lib/initPlausible'
 
-export { usePlausible, withPlausibleProxy }
-export default PlausibleProvider
+export { usePlausible, withPlausibleProxy, initPlausible }

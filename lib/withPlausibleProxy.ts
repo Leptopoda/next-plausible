@@ -1,46 +1,30 @@
 import { NextConfig } from 'next'
-import { Rewrite } from 'next/dist/lib/load-custom-routes'
 
 export default function withPlausibleProxy(options: {
   /**
-   * The site-specific script URL from your Plausible dashboard, e.g. https://plausible.io/js/pa-XXXXX.js.
+   * The host of your plausible instance.
+   * This can be the site-specific script URL from your Plausible dashboard, or a raw host:
+   * - https://plausible.io/js/pa-XXXXX.js
+   * - https://plausible.io
+   * - https://self-hosted-plasubile.example.com
+   *
+   * Defaults to `https://plausible.io`.
    */
-  src: string
-  /**
-   * The local path for the proxied script. Defaults to /js/script.js.
-   */
-  scriptPath?: string
+  src?: string
   /**
    * The local path for the proxied API endpoint. Defaults to /api/event.
    */
   apiPath?: string
 }) {
-  if (!options?.src) {
-    throw new Error(
-      "next-plausible: withPlausibleProxy requires a src option, e.g. 'https://plausible.io/js/pa-XXXXX.js'"
-    )
-  }
   return (nextConfig: NextConfig): NextConfig => {
-    const scriptPath =
-      (nextConfig.basePath ?? '') + (options.scriptPath ?? '/js/script.js')
-    const apiPath =
-      (nextConfig.basePath ?? '') + (options.apiPath ?? '/api/event')
+    const apiPath = options.apiPath ?? '/api/event'
 
     const testDomain = process.env.NEXT_PLAUSIBLE_TEST_DOMAIN
-    const scriptDestination = testDomain
-      ? testDomain + new URL(options.src).pathname
-      : options.src
-    const apiDestination =
-      (testDomain ?? new URL(options.src).origin) + '/api/event'
+    const host = testDomain ?? options.src ?? 'https://plausible.io'
+    const apiDestination = new URL('/api/event', host).href
 
-    const plausibleRewrites: Rewrite[] = [
+    const plausibleRewrites = [
       {
-        basePath: false,
-        source: scriptPath,
-        destination: scriptDestination,
-      },
-      {
-        basePath: false,
         source: apiPath,
         destination: apiDestination,
       },
@@ -54,8 +38,6 @@ export default function withPlausibleProxy(options: {
       ...nextConfig,
       env: {
         ...nextConfig.env,
-        next_plausible_proxy: 'true',
-        next_plausible_scriptPath: scriptPath,
         next_plausible_apiPath: apiPath,
       },
       rewrites: async () => {

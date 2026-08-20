@@ -1,3 +1,4 @@
+import { PlausibleEventOptions, track } from '@plausible-analytics/tracker'
 import { useCallback } from 'react'
 
 // https://docs.plausible.io/custom-event-goals#using-custom-props
@@ -17,7 +18,7 @@ type Events = { [K: string]: Props }
 type IsAny<T> = 0 extends 1 & T ? true : false
 
 export default function usePlausible<E extends Events = any>() {
-  return useCallback(function <N extends keyof E>(
+  return useCallback(function <N extends keyof E & string>(
     eventName: N,
     ...rest: IsAny<E> extends true
       ? [
@@ -29,6 +30,6 @@ export default function usePlausible<E extends Events = any>() {
       ? [Omit<EventOptions<never>, 'props'>?]
       : [EventOptions<E[N]>]
   ) {
-    return (window as any).plausible?.(eventName, rest[0])
+    return track(eventName, rest[0] ?? {})
   }, [])
 }
